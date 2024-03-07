@@ -2,7 +2,8 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
-const port = 3000;
+const backendPort = 3000;
+const frontendPort = 55948;
 
 const db = new sqlite3.Database('database.db');
 
@@ -12,7 +13,14 @@ db.run('CREATE TABLE IF NOT EXISTS tours (id INTEGER PRIMARY KEY AUTOINCREMENT, 
 
 app.use(express.json());
 
-// PARTICIPANST
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:' + frontendPort);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
+// PARTICIPANTS
 
 app.post('/api/participants', (req, res) => {
     const {name, arrival, departure, things} = req.body;
@@ -144,6 +152,6 @@ app.get('/api/tours', (req, res) => {
 });
 
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(backendPort, () => {
+    console.log(`Server is running on port ${backendPort}`);
 });
