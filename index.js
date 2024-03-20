@@ -3,13 +3,13 @@ const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const backendPort = 3000;
-const frontendPort = 55948;
+const frontendPort = 4200;
 
 const db = new sqlite3.Database('database.db');
 
 db.run('CREATE TABLE IF NOT EXISTS participants (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, arrival TEXT, departure TEXT, burdens JSON)');
-db.run('CREATE TABLE IF NOT EXISTS things (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, category TEXT, perPerson FLOAT, unit TEXT, weight FLOAT)');
-db.run('CREATE TABLE IF NOT EXISTS tours (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT, participants JSON)');
+db.run('CREATE TABLE IF NOT EXISTS things (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, category TEXT, perPerson FLOAT, unitID FLOAT, weight FLOAT)');
+db.run('CREATE TABLE IF NOT EXISTS tours (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, start TEXT, end TEXT, participants TEXT)');
 
 app.use(express.json());
 
@@ -87,8 +87,8 @@ app.get('/api/things', (req, res) => {
 });
 
 app.post('/api/things', (req, res) => {
-    const {name, category, perPerson, unit, weight} = req.body;
-    db.run('INSERT INTO things (name, category, perPerson, unit, weight) VALUES (?, ?, ?, ?, ?)', [name, category, perPerson, unit, weight], (err) => {
+    const {name, category, perPerson, unitID, weight} = req.body;
+    db.run('INSERT INTO things (name, category, perPerson, unitID, weight) VALUES (?, ?, ?, ?, ?)', [name, category, perPerson, unitID, weight], (err) => {
         if (err) {
         res.status(500).json({ error: err.message });
         return;
@@ -98,18 +98,17 @@ app.post('/api/things', (req, res) => {
 });
 
 app.put('/api/things/:id', (req, res) => {
-    const userId = req.params.id;
-    const { name, arrival, departure, burdens } = req.body;
+    const userID = req.params.id;
+    const { name, category, perPerson, unitID, weight } = req.body;
   
     db.run(
-      'UPDATE things SET name = ?, category = ?, perPerson = ?, unit = ? WHERE id = ?',
-      [name, arrival, departure, JSON.stringify(burdens), userId],
+      'UPDATE things SET name = ?, category = ?, perPerson = ?, unitID = ?, weight = ? WHERE id = ?',
+      [name, category, perPerson, unitID, weight, userID],
       function(err) {
         if (err) {
           res.status(500).json({ error: err.message });
           return;
         }
-  
         res.json({ message: 'Thing updated successfully' });
       }
     );
@@ -131,24 +130,54 @@ app.delete('/api/things/:id', (req, res) => {
 // TOURS
 
 app.post('/api/tours', (req, res) => {
-    const { name, start, end, participants } = req.body;
-    db.run('INSERT INTO tours (name, start, end, participants) VALUES (?, ?, ?, ?)', [name, start, end, JSON.stringify(participants)], (err) => {
-        if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-        }
-        res.json({ message: 'Tour added successfully' });
-    });
+  const { name, start, end, participants } = req.body;
+  const participantsJSON = JSON.stringify(participants);
+
+  db.run('INSERT INTO tours (name, start, end, participants) VALUES (?, ?, ?, ?)', [name,  start, end, participantsJSON], (err) => {
+      if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+      }
+      res.json({ message: 'Tour added successfully' });
+  });
+});
+
+app.get('/api/tour/:id', (req, res) => {
+  const tourId = req.params.id;
+  db.get('SELECT * FROM tours WHERE id = ?', [tourId], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!row) {
+      res.status(404).json({ error: 'Tour not found' });
+      return;
+    }
+    res.json({ tour: row });
+  });
 });
 
 app.get('/api/tours', (req, res) => {
     db.all('SELECT * FROM tours', (err, rows) => {
         if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+          res.status(500).json({ error: err.message });
+          return;
         }
         res.json({ tours: rows });
     });
+});
+
+app.delete('/api/tours/:id', (req, res) => {
+  const userId = req.params.id;
+
+  db.run('DELETE FROM tours WHERE id = ?', userId, function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+
+    res.json({ message: 'Tour deleted successfully' });
+  });
 });
 
 
