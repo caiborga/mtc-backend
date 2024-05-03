@@ -60,6 +60,7 @@ function generateDatabase(key) {
 
 app.post('/api/register', (req, res) => {
     const { name } = req.body;
+    console.log("req.body", name)
     const key = generateKey()
     generateDatabase(key)
 
@@ -104,7 +105,7 @@ app.post('/api/participants', (req, res) => {
         } else {
             res.status(404).json({ message: 'Not found' });
         }
-    });    
+    });
 });
 
 app.get('/api/participants', (req, res) => {
@@ -164,197 +165,277 @@ app.delete('/api/participants/:id', (req, res) => {
             res.status(404).json({ message: 'Not found' });
         }
     });
-
-    
 });
 
 // THINGS
 
 app.get('/api/things', (req, res) => {
-    db.all('SELECT * FROM things', (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            dataBase.all('SELECT * FROM things', (err, rows) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ things: rows });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-        res.json({ things: rows });
     });
 });
 
 app.post('/api/things', (req, res) => {
-    const { name, category, perPerson, unitID, weight } = req.body;
-    db.run('INSERT INTO things (name, category, perPerson, unitID, weight) VALUES (?, ?, ?, ?, ?)', [name, category, perPerson, unitID, weight], (err) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const { name, category, perPerson, unitID, weight } = req.body;
+            dataBase.run('INSERT INTO things (name, category, perPerson, unitID, weight) VALUES (?, ?, ?, ?, ?)', [name, category, perPerson, unitID, weight], (err) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ message: 'Thing added successfully' });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-        res.json({ message: 'Thing added successfully' });
     });
 });
 
 app.put('/api/things/:id', (req, res) => {
-    const thingID = req.params.id;
-    const { name, category, perPerson, unitID, weight } = req.body;
 
-    db.run(
-        'UPDATE things SET name = ?, category = ?, perPerson = ?, unitID = ?, weight = ? WHERE id = ?',
-        [name, category, perPerson, unitID, weight, thingID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Thing updated successfully' });
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const thingID = req.params.id;
+            const { name, category, perPerson, unitID, weight } = req.body;
+
+            dataBase.run(
+                'UPDATE things SET name = ?, category = ?, perPerson = ?, unitID = ?, weight = ? WHERE id = ?',
+                [name, category, perPerson, unitID, weight, thingID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Thing updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
 });
 
 app.delete('/api/things/:id', (req, res) => {
-    const userId = req.params.id;
+    
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const userId = req.params.id;
+            dataBase.run('DELETE FROM things WHERE id = ?', userId, function (err) {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
 
-    db.run('DELETE FROM things WHERE id = ?', userId, function (err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+                res.json({ message: 'Thing deleted successfully' });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-
-        res.json({ message: 'Thing deleted successfully' });
     });
 });
 
 // TOURS
 
 app.post('/api/tours', (req, res) => {
-    const { tourData, tourParticipants, tourThings, tourCars } = req.body;
-
-    db.run('INSERT INTO tours (tourData, tourParticipants, tourThings, tourCars) VALUES (?, ?, ?, ?)', [tourData, tourParticipants, tourThings, tourCars], (err) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const { tourData, tourParticipants, tourThings, tourCars } = req.body;
+            dataBase.run('INSERT INTO tours (tourData, tourParticipants, tourThings, tourCars) VALUES (?, ?, ?, ?)', [tourData, tourParticipants, tourThings, tourCars], (err) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ message: 'Tour added successfully' });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-        res.json({ message: 'Tour added successfully' });
     });
 });
 
 app.get('/api/tour/:id', (req, res) => {
-    const tourId = req.params.id;
-    db.get('SELECT * FROM tours WHERE id = ?', [tourId], (err, row) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourId = req.params.id;
+            dataBase.get('SELECT * FROM tours WHERE id = ?', [tourId], (err, row) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                if (!row) {
+                    res.status(404).json({ error: 'Tour not found' });
+                    return;
+                }
+                res.json({ tour: row });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-        if (!row) {
-            res.status(404).json({ error: 'Tour not found' });
-            return;
-        }
-        res.json({ tour: row });
     });
 });
 
 app.get('/api/tours', (req, res) => {
-    db.all('SELECT * FROM tours', (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            dataBase.all('SELECT * FROM tours', (err, rows) => {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+                res.json({ tours: rows });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-        res.json({ tours: rows });
     });
 });
 
 app.put('/api/tour/:id', (req, res) => {
-    const tourID = req.params.id;
-    const { tourData, tourParticipants, tourThings, tourCars } = req.body;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourID = req.params.id;
+            const { tourData, tourParticipants, tourThings, tourCars } = req.body;
 
-    db.run(
-        'UPDATE tours SET tourData = ?, tourParticipants = ?, tourThings = ?, tourCars = ? WHERE id = ?',
-        [tourData, tourParticipants, tourThings, tourCars, tourID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Tour updated successfully' });
+            dataBase.run(
+                'UPDATE tours SET tourData = ?, tourParticipants = ?, tourThings = ?, tourCars = ? WHERE id = ?',
+                [tourData, tourParticipants, tourThings, tourCars, tourID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Tour updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
+    
 });
 
 app.put('/api/tour/:id/cars', (req, res) => {
-    const tourID = req.params.id;
-    const { tourCars } = req.body;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourID = req.params.id;
+            const { tourCars } = req.body;
 
-    db.run(
-        'UPDATE tours SET tourCars = ? WHERE id = ?',
-        [tourCars, tourID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Tour Cars updated successfully' });
+            dataBase.run(
+                'UPDATE tours SET tourCars = ? WHERE id = ?',
+                [tourCars, tourID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Tour Cars updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
 });
 
 app.put('/api/tour/:id/data', (req, res) => {
-    const tourID = req.params.id;
-    const { tourData } = req.body;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourID = req.params.id;
+            const { tourData } = req.body;
 
-    db.run(
-        'UPDATE tours SET tourData = ? WHERE id = ?',
-        [tourData, tourID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Tour Data updated successfully' });
+            dataBase.run(
+                'UPDATE tours SET tourData = ? WHERE id = ?',
+                [tourData, tourID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Tour Data updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
 });
 
 app.put('/api/tour/:id/participants', (req, res) => {
-    const tourID = req.params.id;
-    const { tourParticipants } = req.body;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourID = req.params.id;
+            const { tourParticipants } = req.body;
 
-    db.run(
-        'UPDATE tours SET tourParticipants = ? WHERE id = ?',
-        [tourParticipants, tourID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Tour Participants updated successfully' });
+            dataBase.run(
+                'UPDATE tours SET tourParticipants = ? WHERE id = ?',
+                [tourParticipants, tourID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Tour Participants updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
 });
 
 app.put('/api/tour/:id/things', (req, res) => {
-    const tourID = req.params.id;
-    const { tourThings } = req.body;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const tourID = req.params.id;
+            const { tourThings } = req.body;
 
-    db.run(
-        'UPDATE tours SET tourThings = ? WHERE id = ?',
-        [tourThings, tourID],
-        function (err) {
-            if (err) {
-                res.status(500).json({ error: err.message });
-                return;
-            }
-            res.json({ message: 'Tour Things updated successfully' });
+            dataBase.run(
+                'UPDATE tours SET tourThings = ? WHERE id = ?',
+                [tourThings, tourID],
+                function (err) {
+                    if (err) {
+                        res.status(500).json({ error: err.message });
+                        return;
+                    }
+                    res.json({ message: 'Tour Things updated successfully' });
+                }
+            );
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-    );
+    });
+    
 });
 
 app.delete('/api/tours/:id', (req, res) => {
-    const userId = req.params.id;
+    dataBaseValid(req, function(isValid) {
+        if (isValid) {
+            const userId = req.params.id;
 
-    db.run('DELETE FROM tours WHERE id = ?', userId, function (err) {
-        if (err) {
-            res.status(500).json({ error: err.message });
-            return;
+            dataBase.run('DELETE FROM tours WHERE id = ?', userId, function (err) {
+                if (err) {
+                    res.status(500).json({ error: err.message });
+                    return;
+                }
+
+                res.json({ message: 'Tour deleted successfully' });
+            });
+        } else {
+            res.status(404).json({ message: 'Not found' });
         }
-
-        res.json({ message: 'Tour deleted successfully' });
     });
 });
 
