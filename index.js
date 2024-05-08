@@ -5,22 +5,22 @@ const app = express();
 const backendPort = 3400;
 const frontendPort = 4200;
 
-const client = new Client({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'packmas_db',
-    password: 'postgresql4Crap!',
-    port: 3300,
-});
+// const client = new Client({
+//     user: 'postgres',
+//     host: 'localhost',
+//     database: 'packmas_db',
+//     password: 'postgresql4Crap!',
+//     port: 3300,
+// });
 
 // HEROKU DB
-// const client = new Client({
-//     user: 'whvuennigfhsfj',
-//     host: 'ec2-52-51-248-250.eu-west-1.compute.amazonaws.com',
-//     database: 'da65frsefubl36',
-//     password: '93efbf1c80ff756030f418b429ebd60bd1ea504d9589a3fe116b1246fc1f366b',
-//     port: 5432,
-// });
+const client = new Client({
+    user: 'whvuennigfhsfj',
+    host: 'ec2-52-51-248-250.eu-west-1.compute.amazonaws.com',
+    database: 'da65frsefubl36',
+    password: '93efbf1c80ff756030f418b429ebd60bd1ea504d9589a3fe116b1246fc1f366b',
+    port: 5432,
+});
 
 client.connect();
 
@@ -34,7 +34,7 @@ client.query(`
 
 app.use(express.json());
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:' + frontendPort);
+    res.setHeader('Access-Control-Allow-Origin', 'https://caiborga.github.io/mtc-frontend/browser/');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     next();
@@ -222,10 +222,10 @@ app.delete('/api/participants/:id', async (req, res) => {
 app.post('/api/things', async (req, res) => {
     try {
         const schema = await getSchema(req);
-        const { name, category, perPerson, unitID, weight } = req.body;
+        const { name, category, perPerson, unit, weight } = req.body;
 
         // Führe die INSERT-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
-        await client.query(`INSERT INTO ${schema}.things (name, category, per_person, unit_id, weight) VALUES ($1, $2, $3, $4, $5)`, [name, category, perPerson, unitID, weight]);
+        await client.query(`INSERT INTO ${schema}.things (name, category, per_person, unit_id, weight) VALUES ($1, $2, $3, $4, $5)`, [name, category, perPerson, unit, weight]);
         
         res.json({ message: 'Thing added successfully' });
     } catch (err) {
@@ -260,12 +260,12 @@ app.put('/api/things/:id', async (req, res) => {
     try {
         const schema = await getSchema(req);
         const thingID = req.params.id;
-        const { name, category, perPerson, unitID, weight } = req.body;
+        const { name, category, perPerson, unit, weight } = req.body;
 
         // Führe die UPDATE-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
         await client.query(
             `UPDATE ${schema}.things SET name = $1, category = $2, per_person = $3, unit_id = $4, weight = $5 WHERE id = $6`,
-            [name, category, perPerson, unitID, weight, thingID]
+            [name, category, perPerson, unit, weight, thingID]
         );
         
         res.json({ message: 'Thing updated successfully' });
@@ -305,7 +305,6 @@ app.post('/api/tours', async (req, res) => {
         const schema = await getSchema(req);
         const { tourData, tourParticipants, tourThings, tourCars } = req.body;
 
-        // Führe die INSERT-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
         await client.query(`INSERT INTO ${schema}.tours (tour_data, tour_participants, tour_things, tour_cars) VALUES ($1, $2, $3, $4)`, [tourData, tourParticipants, tourThings, tourCars]);
         
         res.json({ message: 'Tour added successfully' });
@@ -323,8 +322,6 @@ app.get('/api/tour/:id', async (req, res) => {
     try {
         const schema = await getSchema(req);
         const tourId = req.params.id;
-
-        // Führe die SELECT-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
         const result = await client.query(`SELECT * FROM ${schema}.tours WHERE id = $1`, [tourId]);
         
         if (result.rows.length === 0) {
@@ -412,7 +409,6 @@ app.put('/api/tour/:id/data', async (req, res) => {
         const tourID = req.params.id;
         const { tourData } = req.body;
 
-        // Führe die UPDATE-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
         await client.query(
             `UPDATE ${schema}.tours SET tour_data = $1 WHERE id = $2`,
             [tourData, tourID]
@@ -435,7 +431,6 @@ app.put('/api/tour/:id/participants', async (req, res) => {
         const tourID = req.params.id;
         const { tourParticipants } = req.body;
 
-        // Führe die UPDATE-Abfrage in der entsprechenden Tabelle des ermittelten Schemas aus
         await client.query(
             `UPDATE ${schema}.tours SET tour_participants = $1 WHERE id = $2`,
             [tourParticipants, tourID]
