@@ -45,7 +45,7 @@ client.query(`
 // });
 
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://caiborga.github.io/mtc-frontend/browser/');
+    res.setHeader('Access-Control-Allow-Origin', 'https://caiborga.github.io/');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     next();
