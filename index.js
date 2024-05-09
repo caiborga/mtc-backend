@@ -20,6 +20,9 @@ const client = new Client({
     database: 'da65frsefubl36',
     password: '93efbf1c80ff756030f418b429ebd60bd1ea504d9589a3fe116b1246fc1f366b',
     port: 5432,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 client.connect();
