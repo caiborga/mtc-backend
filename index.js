@@ -501,7 +501,17 @@ app.delete('/api/tours/:id', async (req, res) => {
 
 // SERVER IS RUNNING
 
-app.listen(backendPort, () => {
-    console.log(`Server is running on port ${backendPort}`);
+// app.listen(backendPort, () => {
+//     console.log(`Server is running on port ${backendPort}`);
+// });
+
+app.listen(backendPort, async () => {
+    try {
+        await client.connect();
+        console.log(`Server is running on port ${backendPort}`);
+        console.log('Connected to the database successfully!');
+    } catch (err) {
+        console.error('Error connecting to the database:', err.message);
+    }
 });
 
