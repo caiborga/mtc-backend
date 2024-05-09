@@ -4,6 +4,7 @@ const { Client } = require('pg');
 const app = express();
 const backendPort = 3400;
 const frontendPort = 4200;
+const port = process.env.PORT || backendPort;
 
 // const client = new Client({
 //     user: 'postgres',
@@ -501,17 +502,6 @@ app.delete('/api/tours/:id', async (req, res) => {
 
 // SERVER IS RUNNING
 
-// app.listen(backendPort, () => {
-//     console.log(`Server is running on port ${backendPort}`);
-// });
-
-app.listen(backendPort, async () => {
-    try {
-        await client.connect();
-        console.log(`Server is running on port ${backendPort}`);
-        console.log('Connected to the database successfully!');
-    } catch (err) {
-        console.error('Error connecting to the database:', err.message);
-    }
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
-
